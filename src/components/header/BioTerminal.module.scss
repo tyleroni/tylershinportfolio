@@ -1,0 +1,55 @@
+.terminal {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.15;
+  font-family: var(--font-terminal);
+}
+
+.cmd {
+  // Smaller than before — JetBrains Mono is denser than VT323 was, so the
+  // same point size felt visually large. Drop ~3px at each clamp bound.
+  font-size: clamp(11px, 1.0vw, 14px);
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  text-transform: lowercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  // Reserve vertical space so the line doesn't collapse mid-animation
+  min-height: 1.2em;
+}
+
+.prompt {
+  color: var(--color-prompt-green);
+}
+
+.cmdText {
+  // GSAP doesn't touch this; the text is updated character-by-character
+  // by the useTypingBio hook
+}
+
+.cursor {
+  color: var(--color-text-default);
+  margin-left: 1px;
+  animation: blink 1s steps(2) infinite;
+}
+
+.out {
+  font-size: clamp(12px, 1.15vw, 16px);
+  letter-spacing: 0.5px;
+  color: var(--color-text-bright);
+  text-transform: lowercase;
+  min-height: 1.2em;
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}

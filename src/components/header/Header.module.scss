@@ -1,0 +1,23 @@
+.header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-header);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px clamp(16px, 2vw, 28px) 12px;
+  pointer-events: none; /* children opt back in */
+}
+
+.left {
+  pointer-events: auto;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}

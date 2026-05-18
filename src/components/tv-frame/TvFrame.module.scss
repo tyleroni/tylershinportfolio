@@ -1,0 +1,87 @@
+.stage {
+  /* Plain viewport-sized container. No flex centering, no padding — the
+     .tv inside fills the stage edge-to-edge, so there's nothing to center
+     or pad. */
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+.tv {
+  /* Fill the entire viewport edge-to-edge. The 9-slice border-image
+     handles arbitrary aspect ratios: the four corner regions of the PNG
+     stay fixed at their original pixel sizes, while the four edge regions
+     stretch to fill whatever space is between them. So the TV "frame"
+     adapts to any viewport shape — no fixed aspect ratio required.
+
+     This replaces an earlier sizing strategy that constrained the TV to
+     a fixed 1919:982 aspect ratio and centered it in a larger stage.
+     That approach left visible black space around the TV on monitors
+     wider than the cap. Filling the viewport avoids that entirely. */
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  /* 9-slice TV frame PNG. The corners/edges of the image stay fixed,
+     the middle "screen area" is transparent so our content renders through.
+     Slice numbers come from where the screen area meets the frame in
+     the source PNG (originally measured from the cleaned cutout file). */
+  border-style: solid;
+  border-color: transparent;
+  border-image: url('/tv-frame.png') 107 119 112 118 stretch;
+  border-top-width: clamp(40px, 6vw, 80px);
+  border-right-width: clamp(40px, 6vw, 80px);
+  border-bottom-width: clamp(40px, 6vw, 80px);
+  border-left-width: clamp(40px, 6vw, 80px);
+  filter: drop-shadow(0 22px 50px rgba(0, 0, 0, 0.75));
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.crtContent {
+  position: absolute;
+  inset: 0;
+  transform-origin: center;
+}
+
+/* The bright horizontal line shown during the CRT transition.
+   GSAP animates scaleY between 0 and 1. */
+.crtLine {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  transform: translateY(-50%) scaleY(0);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+  z-index: var(--z-crt-line);
+  pointer-events: none;
+}
+
+.crtOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-crt-overlay);
+  pointer-events: none;
+  /* Subtle horizontal scanline pattern for CRT feel */
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.0) 0px,
+    rgba(0, 0, 0, 0.0) 2px,
+    rgba(0, 0, 0, 0.12) 3px
+  );
+  mix-blend-mode: multiply;
+}
+
+.crtVignette {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-vignette);
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}

@@ -1,0 +1,46 @@
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none; /* but children below opt back in */
+  z-index: var(--z-labels);
+}
+
+.label {
+  position: absolute;
+  transform: translate(-50%, 0);
+  text-align: center;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  /* Space Mono for the labels — pixel-inspired but legible */
+  font-family: var(--font-label);
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.name {
+  display: block;
+  font-size: clamp(12px, 1.15vw, 15px);
+  letter-spacing: 2px;
+  color: var(--color-text-default);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 4px;
+  transition: color 0.2s ease;
+}
+
+.sub {
+  display: block;
+  font-size: clamp(10px, 0.95vw, 12px);
+  letter-spacing: 1.5px;
+  color: var(--color-text-faint);
+  text-transform: uppercase;
+  font-weight: 400;
+  transition: color 0.2s ease;
+}
+
+/* On hover: brighten the muted sub-line (matches mockup behavior) */
+.hovered .sub {
+  color: var(--color-text-default);
+}

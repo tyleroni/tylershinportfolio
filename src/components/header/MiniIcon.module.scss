@@ -1,0 +1,16 @@
+.miniIcon {
+  width: clamp(34px, 3.5vw, 44px);
+  height: clamp(34px, 3.5vw, 44px);
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  /* The canvas inside fills this fully */
+  display: block;
+  pointer-events: auto;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}

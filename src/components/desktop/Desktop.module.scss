@@ -1,0 +1,65 @@
+.desktop {
+  position: absolute;
+  inset: 0;
+  /* Create a stacking context so all the z-indexes inside this component
+     (header=2, icon labels=3, window=10, etc.) stay scoped INSIDE
+     `.desktop` and don't bleed into the parent's stacking context.
+     Without this, the desktop's icon labels/header/etc would render ABOVE
+     a sibling overlay like PressStart (which has no z-index), because
+     positioned children with explicit z-indexes participate in the
+     nearest stacking context. With isolation, Desktop is a single layer
+     in its parent and PressStart sitting later in the DOM cleanly covers
+     the entire Desktop. `isolation: isolate` is the most semantic way to
+     do this — no magic z-index value needed. */
+  isolation: isolate;
+  /* A single soft top-center radial gradient over the charcoal base.
+     We use ONE gradient (not two) with a wide soft falloff so any banding
+     stretches across many CSS pixels and reads as smooth ambient light,
+     not as discrete patches. The previous two-gradient stack put tiny
+     color steps right where the gradients overlapped — that's exactly
+     the case browsers render as visible bands ("camo").
+     The static noise overlay above this further breaks up any remaining
+     gradient banding (dithers it out). */
+  background:
+    radial-gradient(ellipse 120% 90% at 50% -10%, var(--color-screen-bg-glow-1) 0%, transparent 70%),
+    var(--color-screen-bg);
+  overflow: hidden;
+}
+
+.noiseCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-desktop-bg);
+  pointer-events: none;
+  opacity: 0.1;
+  mix-blend-mode: screen;
+}
+
+/* Caps the icon area to a sensible width on big monitors. */
+.contentBand {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-three-canvas);
+  pointer-events: auto;
+}
+
+.footer {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-header);
+  font-family: var(--font-copyright);
+  font-size: clamp(13px, 1.2vw, 16px);
+  color: var(--color-text-faint);
+  letter-spacing: 3px;
+  pointer-events: none;
+  text-transform: uppercase;
+}

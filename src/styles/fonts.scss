@@ -1,0 +1,6 @@
+/* All site fonts are loaded via the Google Fonts <link> tag in index.html.
+   This file used to host a third-party CDN @font-face for Departure Mono,
+   but that CDN URL was unreliable; we now use JetBrains Mono (already
+   loaded) for the bio terminal. Leaving this file in place so the
+   tokens.scss / global.scss @use chain doesn't break — easy to drop in
+   custom @font-face rules here later without touching the entry points. */

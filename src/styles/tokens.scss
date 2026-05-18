@@ -1,0 +1,55 @@
+/* ============================================================
+   CSS Design Tokens
+   These mirror the JS design-tokens.ts file for use in CSS.
+   Anything that lives in *both* CSS and JS (like colors) should
+   match between the two files.
+   ============================================================ */
+
+:root {
+  /* ----- Colors ----- */
+  --color-bg-deep: #050302; /* darkest part of the surrounding stage */
+  --color-bg-mid: #1a1410; /* TV "wall" color */
+  --color-screen-bg: #1a1a1c; /* desktop charcoal background */
+  --color-screen-bg-glow-1: #2a2a2c; /* top-left ambient glow */
+  --color-screen-bg-glow-2: #232325; /* bottom-right ambient glow */
+
+  --color-text-bright: rgba(255, 255, 255, 0.95);
+  --color-text-default: rgba(255, 255, 255, 0.85);
+  --color-text-muted: rgba(255, 255, 255, 0.5);
+  --color-text-faint: rgba(255, 255, 255, 0.4);
+
+  --color-prompt-green: rgba(120, 220, 150, 0.85);
+  --color-accent-amber: #ffcc44;
+  --color-accent-red: #c63030;
+
+  /* ----- Fonts (mirror what's loaded in index.html) ----- */
+  --font-display: 'Press Start 2P', monospace;
+  /* Bio terminal: JetBrains Mono reads as a clean developer-tool font —
+     legible at small sizes, has a true terminal feel without going full
+     retro-pixel. Previously this was Departure Mono via a flaky third-
+     party CDN; the load was failing and we were falling back to the
+     chunky VT323. */
+  --font-terminal: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-label: 'Space Mono', 'JetBrains Mono', monospace;
+  --font-chrome: 'JetBrains Mono', monospace;
+  --font-copyright: 'VT323', monospace;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  /* ----- Layout constraints -----
+     --tv-max-width is the ceiling for the TV on extremely large monitors
+     (5K+). On normal displays the TV is sized by viewport height in
+     TvFrame.module.scss, so this cap only takes effect when the viewport
+     is wide enough that the height-based size would exceed this value. */
+  --tv-max-width: 2400px;
+  --content-max-width: 1200px; /* max width of icons + windows inside TV */
+
+  /* ----- Z-index scale (avoid magic numbers in component files) ----- */
+  --z-desktop-bg: 0;
+  --z-three-canvas: 1;
+  --z-header: 2;
+  --z-labels: 3;
+  --z-window: 10;
+  --z-crt-overlay: 25;
+  --z-crt-line: 30;
+  --z-vignette: 31;
+}

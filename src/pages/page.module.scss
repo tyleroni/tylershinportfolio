@@ -1,0 +1,95 @@
+/* ============================================================
+   Shared page styles — used by every page that renders inside
+   the window. Each individual page may add its own additional
+   styles in its own module.
+   ============================================================ */
+
+.page {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  /* Scrollbar styling (Chromium/WebKit) */
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 5px;
+  }
+}
+
+.pageInner {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: clamp(32px, 4vw, 64px) clamp(24px, 4vw, 56px);
+  font-family: var(--font-body);
+  color: var(--color-text-bright);
+}
+
+.pageHeader {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.title {
+  font-family: var(--font-terminal);
+  font-size: clamp(32px, 4vw, 56px);
+  font-weight: normal;
+  letter-spacing: 1px;
+  text-transform: lowercase;
+  margin-bottom: 8px;
+  color: var(--color-text-bright);
+}
+
+.subtitle {
+  font-family: var(--font-terminal);
+  color: var(--color-text-muted);
+  font-size: clamp(14px, 1.2vw, 16px);
+  letter-spacing: 1px;
+  text-transform: lowercase;
+}
+
+.section {
+  margin-bottom: 40px;
+  line-height: 1.7;
+
+  p {
+    margin-bottom: 16px;
+    color: var(--color-text-default);
+    font-size: clamp(15px, 1.1vw, 17px);
+  }
+}
+
+.h2 {
+  font-family: var(--font-terminal);
+  font-size: clamp(18px, 1.6vw, 22px);
+  color: var(--color-prompt-green);
+  font-weight: normal;
+  margin-bottom: 16px;
+  text-transform: lowercase;
+  letter-spacing: 1px;
+}
+
+.stackList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    font-family: var(--font-label);
+    font-size: 14px;
+    color: var(--color-text-default);
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    letter-spacing: 0.5px;
+
+    &::before {
+      content: '→ ';
+      color: var(--color-prompt-green);
+    }
+  }
+}
