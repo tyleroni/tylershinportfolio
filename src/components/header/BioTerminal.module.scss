@@ -11,15 +11,15 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 12px;
   line-height: 1.15;
   font-family: var(--font-terminal);
   /* Left padding gives Ness a "home" area on the left side of both rows.
      Sized to fit the sprite when finishing writeOut under the > prompt. */
-  padding: 8px 0 8px 72px;
+  padding: 10px 0 10px 90px;
   // Reserve enough vertical space for two rows plus padding so a parent
   // grid/flex container doesn't collapse the terminal mid-animation.
-  min-height: 88px;
+  min-height: 108px;
   // Don't let Ness sprite escape the bio area
   overflow: visible;
 }
@@ -28,11 +28,8 @@
   position: relative;
   display: flex;
   align-items: center;
-  // JetBrains Mono at the clamped sizes from tokens; matching the
-  // preview's 28px line-height of ~32px would crowd the desktop layout,
-  // so we use a slightly tighter row height that still fits a 64px sprite.
-  height: 28px;
-  font-size: clamp(13px, 1.05vw, 16px);
+  height: 36px;
+  font-size: clamp(16px, 1.3vw, 20px);
   letter-spacing: 0.5px;
 }
 
@@ -63,7 +60,7 @@
   visibility: hidden;
   pointer-events: none;
   font-family: var(--font-terminal);
-  font-size: clamp(13px, 1.05vw, 16px);
+  font-size: clamp(16px, 1.3vw, 20px);
   letter-spacing: 0.5px;
   line-height: 1;
   white-space: pre;
@@ -87,4 +84,19 @@
 // When facing left, undo the default mirror (back to natural orientation)
 .facingLeft {
   transform: scaleX(1);
+}
+
+// Teleport sparkle. Inline SVG with tapered rays + soft halo for a
+// more realistic "twinkle" than a solid clip-path shape. Position +
+// opacity + scale are driven by JS each frame during cross-row transitions.
+.star {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: center;
+  // Outer green glow tying it to the terminal palette.
+  filter: drop-shadow(0 0 10px rgba(120, 220, 150, 0.7))
+    drop-shadow(0 0 22px rgba(120, 220, 150, 0.35));
+  will-change: transform, opacity;
+  overflow: visible;
 }

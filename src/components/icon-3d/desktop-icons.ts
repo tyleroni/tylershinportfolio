@@ -158,26 +158,50 @@ export function buildRecycleBin(): THREE.Group {
  * Folder — the resume icon.
  * Classic manila folder: bottom flat piece + folded tab + slight angle.
  */
+/**
+ * Folder — the resume icon.
+ * Three-layer manila folder built in the same chunky-3D-box style as the
+ * computer icon: a back panel, white paper sandwiched between, a shorter
+ * front panel, and the tab. Layers are separated in z so the depth reads
+ * clearly from any angle.
+ */
 export function buildFolder(): THREE.Group {
   const g = new THREE.Group();
 
-  // Main folder body
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(1.5, 1.1, 0.12),
+  // Back panel — full height, sits at the back
+  const back = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 1.1, 0.06),
     makeMaterial(0xe4b950, { roughness: 0.6 }),
   );
-  g.add(body);
+  back.position.z = -0.10;
+  g.add(back);
 
-  // Tab sticking up on the top
-  const tab = new THREE.Mesh(
-    new THREE.BoxGeometry(0.5, 0.2, 0.12),
+  // White paper — slightly smaller than panels, sandwiched between them
+  const paper = new THREE.Mesh(
+    new THREE.BoxGeometry(1.3, 1.0, 0.04),
+    makeMaterial(0xf5f1e8, { roughness: 0.7 }),
+  );
+  paper.position.set(0, 0.05, 0);
+  g.add(paper);
+
+  // Front panel — slightly shorter than back so paper peeks out the top
+  const front = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 0.95, 0.06),
     makeMaterial(0xe4b950, { roughness: 0.6 }),
   );
-  tab.position.set(-0.4, 0.65, 0);
+  front.position.set(0, -0.075, 0.10);
+  g.add(front);
+
+  // Tab sticking up on the top of the back panel
+  const tab = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 0.2, 0.06),
+    makeMaterial(0xe4b950, { roughness: 0.6 }),
+  );
+  tab.position.set(-0.4, 0.65, -0.10);
   g.add(tab);
 
-  // Slight tilt so it has dimension
-  g.rotation.y = -0.1;
+  // Slight tilt so the layered depth reads at the default camera angle
+  g.rotation.y = -0.15;
 
   return g;
 }

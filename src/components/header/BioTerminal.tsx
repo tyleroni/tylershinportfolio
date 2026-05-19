@@ -18,14 +18,21 @@ import styles from './BioTerminal.module.scss';
    relative positioning still works correctly.
    ============================================================ */
 
-const TOP_OFFSET = 65; // sprite-left = textEndX + TOP_OFFSET
-const BOTTOM_OFFSET = 75; // sprite-left = textStartX - SPRITE_SIZE + BOTTOM_OFFSET
+// --- Top-row positioning: char-multiples version (currently active) ---
+// Gap from text leading edge to Ness's left, expressed as char-widths.
+// Scales with font size — should look consistent across viewport widths.
+const TOP_GAP_CHARS = 6.5;
+
+// --- Top-row positioning: pixel version (kept for easy swap-back) ---
+// const TOP_OFFSET = 162; // sprite-left = textStartX - SPRITE_SIZE + TOP_OFFSET (scaled 1.25x from 130)
+
+const BOTTOM_OFFSET = 94; // sprite-left = textStartX - SPRITE_SIZE + BOTTOM_OFFSET
 
 // Mirror X compensation. The Ness GIF has asymmetric transparent padding,
 // so when scaleX(-1) is applied (facing left), the visible body shifts
 // sideways within the bounding box. This offset is added to sprite-left
 // whenever Ness is facing left, keeping his visible body anchored.
-const MIRROR_X_OFFSET = 7;
+const MIRROR_X_OFFSET = 9;
 
 // Fixed hop duration — snappy direction flip. Used for both same-row hops
 // and the relevant half of cross-row transitions.
@@ -41,7 +48,14 @@ const HOLD_DURATION = 300;
 const MS_PER_CHAR = 80;
 
 // Sprite size in pixels.
-const SPRITE_SIZE = 64;
+const SPRITE_SIZE = 80;
+
+// Size of the teleport sparkle star in pixels.
+const STAR_SIZE = 56;
+
+// Toggle: true = teleport (star sparkle, no walking between rows, no direction-flip
+// hops), false = original walk-and-hop transitions. Flip to false to revert.
+const USE_TELEPORT_TRANSITIONS = true;
 
 // Both the text reveal AND Ness's position complete at this fraction of
 // raw phase progress, not at 1.0. Avoids the triple-stutter at phase end.
@@ -94,6 +108,7 @@ export default function BioTerminal() {
   const outTextRef = useRef<HTMLSpanElement>(null);
   const measurerRef = useRef<HTMLSpanElement>(null);
   const nessRef = useRef<HTMLImageElement>(null);
+  const starRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     const terminal = terminalRef.current;
@@ -104,8 +119,9 @@ export default function BioTerminal() {
     const outText = outTextRef.current;
     const measurer = measurerRef.current;
     const ness = nessRef.current;
+    const star = starRef.current;
 
-    if (!terminal || !rowCmd || !rowOut || !prompt || !cmdText || !outText || !measurer || !ness) {
+    if (!terminal || !rowCmd || !rowOut || !prompt || !cmdText || !outText || !measurer || !ness || !star) {
       return;
     }
 
@@ -132,7 +148,12 @@ export default function BioTerminal() {
       yBot = or.top - tr.top + (or.height - SPRITE_SIZE) / 2;
 
       ready = true;
+      if (measureLogCount < 3) {
+        console.log(`[BIO measure] charWidth=${charWidth.toFixed(2)} promptWidth=${promptWidth.toFixed(2)} yTop=${yTop.toFixed(2)} yBot=${yBot.toFixed(2)} terminalWidth=${tr.width.toFixed(2)}`);
+        measureLogCount++;
+      }
     }
+    let measureLogCount = 0;
 
     document.fonts.ready.then(measure);
 
@@ -156,7 +177,7 @@ export default function BioTerminal() {
       return Math.min(1, rawProgress / TEXT_COMPLETION_FRACTION);
     }
 
-    function top_visibleCharCount(phaseName: PhaseName, progress: number) {
+    function top_leadingCharIdx(phaseName: PhaseName, progress: number) {
       const line = BIO_LINES[bioIndex];
       const tp = textProgress(progress);
       if (phaseName === 'writeCmd') return tp * line.cmd.length;
@@ -164,8 +185,11 @@ export default function BioTerminal() {
     }
 
     function top_getNessLeft(phaseName: PhaseName, progress: number) {
-      const textEndX = promptWidth + top_visibleCharCount(phaseName, progress) * charWidth;
-      return textEndX + TOP_OFFSET;
+      const textStartX = promptWidth + top_leadingCharIdx(phaseName, progress) * charWidth;
+      // Char-multiples (active): gap scales with font size.
+      return textStartX + TOP_GAP_CHARS * charWidth;
+      // Pixel version (swap back): comment line above, uncomment below.
+      // return textStartX - SPRITE_SIZE + TOP_OFFSET;
     }
 
     function bottom_leadingCharIdx(phaseName: PhaseName, progress: number) {
@@ -214,6 +238,8 @@ export default function BioTerminal() {
     }
 
     function advancePhase(now: number) {
+      const prevPhase = phase;
+      const prevPrePhase = prePhase;
       if (phase === 'transition' && prePhase) {
         phase = prePhase;
         prePhase = null;
@@ -235,18 +261,32 @@ export default function BioTerminal() {
         phase = 'hold';
       }
       phaseStartTime = now;
+      if (phaseLogCount < 15) {
+        console.log('[BIO phase]', `${prevPhase}(pre=${prevPrePhase}) → ${phase}(pre=${prePhase})`, 'duration=', getPhaseDuration(phase));
+        phaseLogCount++;
+      }
     }
+    let phaseLogCount = 0;
 
     // ----- RENDER -----
 
+    let writeCmdLogCount = 0;
     function renderState(p: PhaseName, progress: number) {
       const line = BIO_LINES[bioIndex];
       const tp = textProgress(progress);
 
       if (p === 'writeCmd') {
         const len = Math.floor(tp * line.cmd.length);
-        cmdText!.textContent = line.cmd.substring(0, len);
+        const visible = line.cmd.substring(0, len);
+        // Pad with trailing spaces so the row reserves its full width from the
+        // start of the phase. Keeps the terminal wide enough that Ness's
+        // sprite-left isn't clamped by `terminal.clientWidth - SPRITE_SIZE`.
+        cmdText!.textContent = visible + ' '.repeat(line.cmd.length - len);
         outText!.textContent = '';
+        if (writeCmdLogCount < 12) {
+          console.log(`[BIO writeCmd] progress=${progress.toFixed(3)} tp=${tp.toFixed(3)} len=${len} text="${cmdText!.textContent}" nessLeft=${ness!.style.left} nessTop=${ness!.style.top}`);
+          writeCmdLogCount++;
+        }
       } else if (p === 'writeOut') {
         cmdText!.textContent = line.cmd;
         const len = Math.floor(tp * line.out.length);
@@ -259,7 +299,8 @@ export default function BioTerminal() {
         outText!.textContent = ' '.repeat(line.out.length - len) + visible;
       } else {
         const len = Math.floor((1 - tp) * line.cmd.length);
-        cmdText!.textContent = line.cmd.substring(0, len);
+        const visible = line.cmd.substring(0, len);
+        cmdText!.textContent = visible + ' '.repeat(line.cmd.length - len);
         outText!.textContent = '';
       }
     }
@@ -270,11 +311,16 @@ export default function BioTerminal() {
       ness!.style.top = `${row === 'top' ? yTop : yBot}px`;
       ness!.style.width = `${SPRITE_SIZE}px`;
       ness!.style.height = `${SPRITE_SIZE}px`;
+      // Reset opacity in case a previous transition faded Ness out.
+      ness!.style.opacity = '1';
       ness!.classList.toggle(styles.facingLeft, facingLeft);
     }
 
     function render(now: number) {
       if (!ready) return;
+
+      // Default: hide the teleport star. The transition branch turns it on.
+      star!.style.opacity = '0';
 
       const elapsed = now - phaseStartTime;
       const duration = getPhaseDuration(phase);
@@ -287,6 +333,66 @@ export default function BioTerminal() {
         const prevFacingLeft = PHASE_CONFIG[justEndedPhase].direction === 'left';
         const nextFacingLeft = PHASE_CONFIG[prePhase].direction === 'left';
 
+        // Teleport ONLY for cross-row jumps. Same-row direction flips keep
+        // the original hop-in-place + flip animation.
+        if (USE_TELEPORT_TRANSITIONS && !sameRow) {
+          // ===== TELEPORT (cross-row only) =====
+          // Star sparkles + Ness fades at takeoff position, then again at landing
+          // position. Replaces the old walk-then-hop animation.
+          const elapsedMs = progress * duration;
+          const halfMs = duration / 2;
+
+          let x: number, y: number, facingLeft: boolean;
+          let nessOpacity: number;
+          let starX: number, starY: number, starScale: number, starOpacity: number;
+
+          if (elapsedMs < halfMs) {
+            // DEPART: at transitionFrom
+            const halfProgress = elapsedMs / halfMs;
+            x = transitionFrom.x;
+            y = transitionFrom.y;
+            facingLeft = prevFacingLeft;
+            nessOpacity = Math.max(0, 1 - halfProgress * 1.5);
+            // Match Ness's actual visible center: when facing left,
+            // MIRROR_X_OFFSET shifts him +Xpx so the body lines up inside the sprite box.
+            const nessVisibleLeft = prevFacingLeft ? transitionFrom.x + MIRROR_X_OFFSET : transitionFrom.x;
+            starX = nessVisibleLeft + SPRITE_SIZE / 2;
+            starY = transitionFrom.y + SPRITE_SIZE / 2;
+            starScale = 0.3 + halfProgress * 1.1;
+            starOpacity = halfProgress < 0.5 ? halfProgress * 2 : (1 - halfProgress) * 2;
+          } else {
+            // ARRIVE: at transitionTo
+            const halfProgress = (elapsedMs - halfMs) / halfMs;
+            x = transitionTo.x;
+            y = transitionTo.y;
+            facingLeft = nextFacingLeft;
+            nessOpacity = Math.min(1, (halfProgress - 0.33) * 1.5);
+            const nessVisibleLeft = nextFacingLeft ? transitionTo.x + MIRROR_X_OFFSET : transitionTo.x;
+            starX = nessVisibleLeft + SPRITE_SIZE / 2;
+            starY = transitionTo.y + SPRITE_SIZE / 2;
+            starScale = 0.3 + halfProgress * 1.1;
+            starOpacity = halfProgress < 0.5 ? halfProgress * 2 : (1 - halfProgress) * 2;
+          }
+
+          ness!.style.left = `${facingLeft ? x + MIRROR_X_OFFSET : x}px`;
+          ness!.style.top = `${y}px`;
+          ness!.style.width = `${SPRITE_SIZE}px`;
+          ness!.style.height = `${SPRITE_SIZE}px`;
+          ness!.style.opacity = `${Math.max(0, nessOpacity)}`;
+          ness!.classList.toggle(styles.facingLeft, facingLeft);
+
+          star!.style.left = `${starX - STAR_SIZE / 2}px`;
+          star!.style.top = `${starY - STAR_SIZE / 2}px`;
+          star!.style.transform = `scale(${starScale})`;
+          star!.style.opacity = `${Math.max(0, starOpacity)}`;
+
+          renderState(justEndedPhase, 1.0);
+          return;
+        }
+
+        // ===== WALK/HOP =====
+        // Always runs for same-row transitions (hop + flip in place).
+        // Also runs for cross-row if USE_TELEPORT_TRANSITIONS is flipped to false.
         let x: number, y: number, facingLeft: boolean;
 
         if (sameRow) {
@@ -359,14 +465,29 @@ export default function BioTerminal() {
       renderState(realPhase, progress);
 
       const spriteLeft = computeNessLeft(realPhase, progress);
-      const maxX = terminal!.clientWidth - SPRITE_SIZE;
-      const clampedLeft = Math.max(-SPRITE_SIZE * 0.25, Math.min(maxX, spriteLeft));
+      let finalLeft: number;
+      if (cfg.row === 'top') {
+        // Top row: skip upper clamp. With TOP_OFFSET sized so Ness sits past
+        // the typed text, his target often exceeds the (shrink-wrapped) terminal's
+        // right edge. The clamp would pin him there and cause a visible "jump"
+        // as the terminal widens during writeCmd. Terminal has overflow:visible,
+        // so letting Ness extend past the right edge is fine.
+        finalLeft = Math.max(-SPRITE_SIZE * 0.25, spriteLeft);
+      } else {
+        const maxX = terminal!.clientWidth - SPRITE_SIZE;
+        finalLeft = Math.max(-SPRITE_SIZE * 0.25, Math.min(maxX, spriteLeft));
+      }
 
-      applyNess(clampedLeft, cfg.row, cfg.direction === 'left');
+      applyNess(finalLeft, cfg.row, cfg.direction === 'left');
     }
 
+    let firstReadyLogged = false;
     function frame(now: number) {
       if (ready) {
+        if (!firstReadyLogged) {
+          console.log(`[BIO first ready frame] now=${now.toFixed(0)} phase=${phase} phaseStartTime=${phaseStartTime} cmd="${BIO_LINES[0].cmd}"`);
+          firstReadyLogged = true;
+        }
         if (phaseStartTime === 0) phaseStartTime = now;
         const elapsed = now - phaseStartTime;
         const duration = getPhaseDuration(phase);
@@ -384,7 +505,11 @@ export default function BioTerminal() {
     };
   }, []);
 
-  const first = BIO_LINES[0];
+  // Render the cmd span pre-filled with spaces matching the first bio line's
+  // length. This ensures the terminal mounts at its full width, so the
+  // very first writeCmd frame doesn't get clamped by a stale terminal.clientWidth
+  // before the row has reflowed to fit the spaces it writes.
+  const initialCmdSpaces = ' '.repeat(BIO_LINES[0].cmd.length);
 
   return (
     <div ref={terminalRef} className={styles.terminal}>
@@ -392,9 +517,7 @@ export default function BioTerminal() {
         <span ref={promptRef} className={styles.prompt}>
           &gt;
         </span>
-        <span ref={cmdTextRef} className={styles.text}>
-          {first.cmd}
-        </span>
+        <span ref={cmdTextRef} className={styles.text}>{initialCmdSpaces}</span>
       </div>
       <div ref={rowOutRef} className={styles.row}>
         <span ref={outTextRef} className={`${styles.text} ${styles.muted}`} />
@@ -409,6 +532,38 @@ export default function BioTerminal() {
         aria-hidden="true"
         className={styles.ness}
       />
+      <svg
+        ref={starRef}
+        className={styles.star}
+        width={STAR_SIZE}
+        height={STAR_SIZE}
+        viewBox="0 0 100 100"
+        aria-hidden="true"
+      >
+        <defs>
+          <radialGradient id="bioStarHalo">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.55)" />
+            <stop offset="60%" stopColor="rgba(255,255,255,0.08)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </radialGradient>
+          <linearGradient id="bioStarRay" x1="0%" y1="50%" x2="100%" y2="50%">
+            <stop offset="0%" stopColor="rgba(255,255,255,0)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,1)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </linearGradient>
+        </defs>
+        {/* Soft halo */}
+        <circle cx="50" cy="50" r="42" fill="url(#bioStarHalo)" />
+        {/* Long horizontal ray */}
+        <ellipse cx="50" cy="50" rx="48" ry="1.4" fill="url(#bioStarRay)" />
+        {/* Long vertical ray */}
+        <ellipse cx="50" cy="50" rx="48" ry="1.4" fill="url(#bioStarRay)" transform="rotate(90 50 50)" />
+        {/* Shorter diagonal rays */}
+        <ellipse cx="50" cy="50" rx="26" ry="0.9" fill="url(#bioStarRay)" transform="rotate(45 50 50)" />
+        <ellipse cx="50" cy="50" rx="26" ry="0.9" fill="url(#bioStarRay)" transform="rotate(135 50 50)" />
+        {/* Bright pinpoint core */}
+        <circle cx="50" cy="50" r="2.4" fill="white" />
+      </svg>
     </div>
   );
 }
