@@ -1,55 +1,90 @@
+/* ============================================================
+   Bio terminal — two rows of text with an animated Ness sprite
+   walking across writing and erasing.
+
+   All positioning math lives in BioTerminal.tsx. The styles here
+   set up the visual structure (rows, prompt, sprite) and the
+   filter that makes Ness match the green-phosphor terminal look.
+   ============================================================ */
+
 .terminal {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
   line-height: 1.15;
   font-family: var(--font-terminal);
+  /* Left padding gives Ness a "home" area on the left side of both rows.
+     Sized to fit the sprite when finishing writeOut under the > prompt. */
+  padding: 8px 0 8px 72px;
+  // Reserve enough vertical space for two rows plus padding so a parent
+  // grid/flex container doesn't collapse the terminal mid-animation.
+  min-height: 88px;
+  // Don't let Ness sprite escape the bio area
+  overflow: visible;
 }
 
-.cmd {
-  // Smaller than before — JetBrains Mono is denser than VT323 was, so the
-  // same point size felt visually large. Drop ~3px at each clamp bound.
-  font-size: clamp(11px, 1.0vw, 14px);
-  letter-spacing: 0.5px;
-  color: var(--color-text-muted);
-  text-transform: lowercase;
+.row {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
-  // Reserve vertical space so the line doesn't collapse mid-animation
-  min-height: 1.2em;
+  // JetBrains Mono at the clamped sizes from tokens; matching the
+  // preview's 28px line-height of ~32px would crowd the desktop layout,
+  // so we use a slightly tighter row height that still fits a 64px sprite.
+  height: 28px;
+  font-size: clamp(13px, 1.05vw, 16px);
+  letter-spacing: 0.5px;
 }
 
 .prompt {
   color: var(--color-prompt-green);
+  font-weight: 500;
+  margin-right: 18px;
+  flex-shrink: 0;
 }
 
-.cmdText {
-  // GSAP doesn't touch this; the text is updated character-by-character
-  // by the useTypingBio hook
-}
-
-.cursor {
-  color: var(--color-text-default);
-  margin-left: 1px;
-  animation: blink 1s steps(2) infinite;
-}
-
-.out {
-  font-size: clamp(12px, 1.15vw, 16px);
-  letter-spacing: 0.5px;
+.text {
   color: var(--color-text-bright);
+  white-space: pre;
   text-transform: lowercase;
-  min-height: 1.2em;
+
+  &.muted {
+    color: var(--color-text-muted);
+    // Indent the bottom row's text to align under the top row's text
+    // (after the prompt). Set at runtime in measure() in BioTerminal.tsx
+    // — the var is set on the terminal element with a sensible fallback.
+    padding-left: var(--prompt-indent, 22px);
+  }
 }
 
-@keyframes blink {
-  0%,
-  50% {
-    opacity: 1;
-  }
-  50.01%,
-  100% {
-    opacity: 0;
-  }
+// Hidden helper used to measure character width at runtime
+.measurer {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  font-family: var(--font-terminal);
+  font-size: clamp(13px, 1.05vw, 16px);
+  letter-spacing: 0.5px;
+  line-height: 1;
+  white-space: pre;
+}
+
+// Ness sprite. Position is set entirely by JS (left/top/width/height
+// applied each frame). The filter creates the green-phosphor look that
+// matches the rest of the terminal text.
+.ness {
+  position: absolute;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  filter: grayscale(100%) contrast(800%) sepia(100%) hue-rotate(70deg)
+    saturate(500%) brightness(120%);
+  pointer-events: none;
+  transform-origin: center;
+  // Default: face right (sprite naturally faces left, so we mirror)
+  transform: scaleX(-1);
+}
+
+// When facing left, undo the default mirror (back to natural orientation)
+.facingLeft {
+  transform: scaleX(1);
 }

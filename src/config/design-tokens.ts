@@ -31,13 +31,6 @@ export const TOKENS = {
   WINDOW_OPEN_EASE: 'expo.out', // GSAP ease for opening
   WINDOW_CLOSE_EASE: 'expo.in', // GSAP ease for closing
 
-  // ----- Terminal-style bio (top-left of desktop)
-  BIO_TYPE_SPEED: 55, // ms per character when typing
-  BIO_BACKSPACE_SPEED: 28, // ms per character when erasing
-  BIO_PAUSE_AFTER_CMD: 280, // pause between command and output
-  BIO_HOLD_DURATION: 4500, // ms each completed line is held
-  BIO_TYPE_JITTER: 25, // random ms added per keystroke for organic feel
-
   // ----- Layout constraints (these prevent the desktop content from
   //       spreading too wide on big monitors. The TV frame itself is
   //       constrained separately in CSS.)
